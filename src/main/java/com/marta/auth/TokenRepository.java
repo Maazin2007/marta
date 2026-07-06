@@ -7,6 +7,6 @@ import java.util.Optional;
 
 @Repository
 public interface TokenRepository extends JpaRepository<Token, String> {
-    // optional means that the result can be null also 
+    // optional means that the result can be null also
     Optional<Token> findByToken(String token);
 }
