@@ -1,0 +1,10 @@
+package com.marta.auth;
+
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface ResearcherRepository extends CrudRepository<Researcher, UUID> {
+    Optional<Researcher> findByEmail(String email);
+}
