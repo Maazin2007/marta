@@ -1,5 +1,6 @@
 package com.marta.auth;
 
+import com.marta.auth.dto.Sex;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,8 +28,9 @@ public class ParticipantDemographic {
     @Column(name="year_of_study", updatable = false, nullable = false)
     private Integer yearOfStudy;
 
-    @Column(name="sex", updatable = false, nullable = false)
-    private String sex;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sex", nullable = false, updatable = false)
+    private Sex sex;
 
     @Column(name="self_reported_confidence", updatable = false, nullable = false)
     private Double selfReportedConfidence;
@@ -37,7 +39,7 @@ public class ParticipantDemographic {
     @Column(name="created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public ParticipantDemographic(String participantID, Integer yearOfStudy, String sex, Double selfReportedConfidence) {
+    public ParticipantDemographic(String participantID, Integer yearOfStudy, Sex sex, Double selfReportedConfidence) {
         this.participantID = participantID;
         this.yearOfStudy = yearOfStudy;
         this.sex = sex;
