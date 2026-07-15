@@ -1,5 +1,7 @@
 package com.marta.auth;
 
+import com.marta.auth.dto.LoginRequest;
+import com.marta.auth.dto.LoginResponse;
 import com.marta.auth.dto.RegisterRequest;
 import com.marta.auth.dto.RegisterResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+
 
 @RestController()
 @RequestMapping("/participants")
@@ -23,9 +27,13 @@ public class ParticipantController {
     //***************************************************** Routes **********************************************************
     // POST marta/api/v1/participants/register
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> registerParticipant(@RequestBody RegisterRequest request) {
-        return participantService.registerParticipant(request);
+    public ResponseEntity<RegisterResponse> registerParticipant(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(participantService.registerParticipant(request));
     }
 
-
+    // POST marta/api/v1/participants/login
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> loginParticipant(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(participantService.loginParticipant(request));
+    }
 }
