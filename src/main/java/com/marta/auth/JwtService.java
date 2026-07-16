@@ -5,6 +5,7 @@ import java.util.Date;
 import java.security.Key;
 import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
@@ -14,8 +15,9 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
-    // secret key for the JWT 32 characters long
-    private static final String SECRET_KEY = "01234567890123456789012345678901";
+    // Injecting the secret key from application.properties
+    @Value("${application.security.jwt.secret-key}")
+    private String secretKey;
 
     // Generate a JWT token
     public String generateToken(String participantId) {
@@ -29,7 +31,7 @@ public class JwtService {
 
     // Get the signing key for the JWT in mathematically secure way for spring boot
     private Key getSignInKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     // extract all claims
@@ -44,7 +46,7 @@ public class JwtService {
     // extract a specific claim
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
-        // each function object has a apply method that takes the argument and returns the result
+        // each function object has a apply method that takes the claims and returns the type T
         return claimsResolver.apply(claims);
     }
 
