@@ -6,7 +6,6 @@ import com.marta.auth.dto.RegisterRequest;
 import com.marta.auth.dto.RegisterResponse;
 import com.marta.auth.dto.ResetPasswordRequest;
 import com.marta.auth.dto.ResetPasswordRespone;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
