@@ -4,6 +4,8 @@ import com.marta.auth.dto.LoginRequest;
 import com.marta.auth.dto.LoginResponse;
 import com.marta.auth.dto.RegisterRequest;
 import com.marta.auth.dto.RegisterResponse;
+import com.marta.auth.dto.ResetPasswordRequest;
+import com.marta.auth.dto.ResetPasswordRespone;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,12 +16,13 @@ public class ParticipantService {
     private final ParticipantRepository participantRepository;
     private final PasswordEncoder passwordEncoder;
     private final ParticipantDemographicRepository participantDemographicRepository;
-
+    private final JwtService jwtService;
     // @Qualifier tells which bean returning PasswordEncoder type to use which method to use
-    public ParticipantService(ParticipantRepository participantRepository, @Qualifier("passwordEncoder") PasswordEncoder passwordEncoder, ParticipantDemographicRepository participantDemographicRepository) {
+    public ParticipantService(ParticipantRepository participantRepository, @Qualifier("passwordEncoder") PasswordEncoder passwordEncoder, ParticipantDemographicRepository participantDemographicRepository, JwtService jwtService) {
         this.participantRepository = participantRepository;
         this.passwordEncoder = passwordEncoder;
         this.participantDemographicRepository = participantDemographicRepository;
+        this.jwtService = jwtService;
     }
 
     /**
@@ -83,7 +86,29 @@ public class ParticipantService {
         if (!passwordEncoder.matches(request.getPassword(), participant.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid password");
         }
-        // generate a new token
+        // generate a JWT token
+        String jwtToken = jwtService.generateToken(request.getParticipantId());
+        // return the response
+        return new LoginResponse(request.getParticipantId(), jwtToken);
     }
 
+    /**
+     * Resets the password of a participant
+     * @param request The request containing the participant's ID, PIN, and new password
+     */
+    public ResetPasswordRespone resetPassword(ResetPasswordRequest request) {
+        // find the participant by ID
+        Participant participant = participantRepository.findByParticipantId(request.getParticipantId()).orElseThrow(() -> new IllegalArgumentException("Invalid participant ID"));
+        // check if the PIN is correct
+        if (!passwordEncoder.matches(request.getPin(), participant.getPinHash())) {
+            throw new IllegalArgumentException("Invalid PIN");
+        }
+        // has the new password
+        String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
+        // update the participant's password
+        participant.setPasswordHash(newPasswordHash);
+        participantRepository.save(participant);
+        // return the response
+        return new ResetPasswordRespone("Password reset successfully");
+    }
 }

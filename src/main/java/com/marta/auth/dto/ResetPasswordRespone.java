@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponse {
-    private String participantId;
-    private String JWTToken;
+public class ResetPasswordRespone {
+    private String message;
 }
