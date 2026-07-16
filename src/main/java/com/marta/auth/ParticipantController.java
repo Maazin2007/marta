@@ -21,7 +21,6 @@ public class ParticipantController {
     // get the Service Class for this controller
     private final ParticipantService participantService;
 
-    @Autowired
     public ParticipantController(ParticipantService participantService) {
         this.participantService = participantService;
     }
