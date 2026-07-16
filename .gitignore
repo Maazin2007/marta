@@ -15,7 +15,7 @@ target/
 
 #Project Specific md file ###
 PROJECT.md
-
+PLAN.md
 ## variables
 /src/main/resources/application.properties
 ### IntelliJ IDEA ###

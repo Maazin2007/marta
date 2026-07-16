@@ -1,17 +1,22 @@
 package com.marta.config;
 
-import com.marta.auth.JwtService;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.FilterChain;
 import java.io.IOException;
 import java.util.ArrayList;
-import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.List;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.marta.auth.service.JwtService;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -34,13 +39,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         // extract the token
         final String jwtToken = authHeader.substring(7);
+        final String role = jwtService.extractRole(jwtToken);
         try {
             // extract the participant id from the token
             final String participantId = jwtService.extractParticipantId(jwtToken);
             // check if the participant id is present
             if (participantId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 // create the authentication token
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(participantId, null, new ArrayList<>());
+                // CONVERT THE ROLE STRING into a spring security role object
+                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                if (role != null) {
+                    authorities.add(new SimpleGrantedAuthority(role));
+                }
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(participantId, null, authorities);
                 // add extra network details to the authentication object
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 // set the authentication in the security context
