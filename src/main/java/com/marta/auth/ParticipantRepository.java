@@ -1,5 +1,7 @@
 package com.marta.auth;
 
+import com.marta.auth.model.Participant;
+
 import java.util.Optional;
 import java.util.UUID;
 

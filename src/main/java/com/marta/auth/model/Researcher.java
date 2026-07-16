@@ -1,4 +1,4 @@
-package com.marta.auth;
+package com.marta.auth.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;

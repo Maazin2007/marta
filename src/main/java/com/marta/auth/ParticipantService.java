@@ -1,5 +1,8 @@
 package com.marta.auth;
 
+import com.marta.auth.model.Participant;
+import com.marta.auth.model.ParticipantDemographic;
+
 import com.marta.auth.dto.LoginRequest;
 import com.marta.auth.dto.LoginResponse;
 import com.marta.auth.dto.RegisterRequest;

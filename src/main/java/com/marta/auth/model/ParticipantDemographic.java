@@ -1,4 +1,4 @@
-package com.marta.auth;
+package com.marta.auth.model;
 
 import com.marta.auth.dto.Sex;
 import jakarta.persistence.*;

@@ -1,5 +1,7 @@
 package com.marta.auth;
 
+import com.marta.auth.model.Researcher;
+
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
