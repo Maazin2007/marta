@@ -2,6 +2,7 @@ package com.marta.auth.controller;
 
 import java.util.List;
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +32,7 @@ public class ResearcherController {
 
     // POST /marta/api/v1/auth/researcher/login
     @PostMapping("/login")
+    @RateLimiter(name = "loginLimit")
     public ResponseEntity<ResearcherLoginResponse> loginResearcher(@Valid @RequestBody ResearcherLoginRequest request) {
         return ResponseEntity.ok(researcherService.loginResearcher(request));
     }

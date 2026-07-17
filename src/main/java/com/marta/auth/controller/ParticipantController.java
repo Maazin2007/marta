@@ -9,6 +9,7 @@ import com.marta.auth.dto.RegisterRequest;
 import com.marta.auth.dto.RegisterResponse;
 import com.marta.auth.dto.ResetPasswordRequest;
 import com.marta.auth.dto.ResetPasswordRespone;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,6 +37,7 @@ public class ParticipantController {
 
     // POST marta/api/v1/auth/login
     @PostMapping("/login")
+    @RateLimiter(name = "loginLimit")
     public ResponseEntity<LoginResponse> loginParticipant(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(participantService.loginParticipant(request));
     }

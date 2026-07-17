@@ -93,8 +93,8 @@ public class ParticipantService {
         if (!passwordEncoder.matches(request.getPassword(), participant.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid password");
         }
-        // generate a JWT oken
-        String jwtToken = jwtService.generateTokenWithRole(request.getParticipantId(), "PARTICIPANT");
+        // generate a JWT token using the database UUID!
+        String jwtToken = jwtService.generateTokenWithRole(participant.getId().toString(), "PARTICIPANT");
         // return the response
         return new LoginResponse(request.getParticipantId(), jwtToken);
     }
