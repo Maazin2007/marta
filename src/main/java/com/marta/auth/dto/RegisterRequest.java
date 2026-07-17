@@ -36,6 +36,6 @@ public class RegisterRequest {
     private String password;
     
     @NotBlank(message = "pin is required")
-    @Size(min = 4, max = 4, message = "PIN must be exactly 4 digits")
+    @Size(min = 6, max = 6, message = "PIN must be exactly 6 digits")
     private String pin;
 }

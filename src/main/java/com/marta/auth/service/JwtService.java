@@ -1,8 +1,11 @@
-package com.marta.auth;
+package com.marta.auth.service;
 
-import java.util.HashMap;
-import java.util.Date;
+import com.marta.auth.service.*;
+import com.marta.auth.repository.*;
+
 import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +32,21 @@ public class JwtService {
             .compact();
     }
 
+    // Generate role specific token
+    public String generateTokenWithRole(String participantId, String role) {
+        // create a hashmap to store the claims
+        HashMap<String, Object> claims = new HashMap<>();
+        // add the role to the claims
+        claims.put("role", role);
+        // set the claims, subject, expiration, and signing key
+        return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(participantId)
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 hours
+            .signWith(getSignInKey(), SignatureAlgorithm.HS256) // HS256 is the signing algorithm
+            .compact(); // compact the token into a string
+    }
+
     // Get the signing key for the JWT in mathematically secure way for spring boot
     private Key getSignInKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
@@ -53,5 +71,10 @@ public class JwtService {
     // extract the participant ID from the JWT token
     public String extractParticipantId(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    // extract the role from the JWT token
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> (String) claims.get("role"));
     }
 }
