@@ -101,9 +101,11 @@ npm run dev
 
 ## Status
 
-- ✅ Participant-side auth (register, login, reset password) — complete (includes JWT, Validation, and Global Error Handling)
-- ⏳ Researcher-side auth (login, list/delete participants) — deferred, spec in PROJECT_SCOPE.md
-- ⏳ AI chat / diagnostic session feature — not yet built
+- ✅ Participant-side auth (register, login, reset password) — complete
+- ✅ Researcher-side auth (login) — complete
+- ✅ AI chat / diagnostic session feature — complete (Claude + LangChain4j)
+- ✅ 11-item Feedback & Rate Limiting — complete
+- ✅ Hybrid RAG Vector Pipeline (pgvector) — complete
 - ⏳ Next.js frontend — not yet built
 - ⏳ Tests, CI/CD pipeline, containerization — planned after core features ship
 
