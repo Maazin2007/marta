@@ -18,20 +18,19 @@ public interface KnowledgeChunkRepository extends JpaRepository<KnowledgeChunk, 
     List<KnowledgeChunk> findByCaseIdIsNull();
 
     // Note: When we hook up the pgvector extension in Block 4, 
-    // we will add our custom mathematical vector-search SQL queries here!
     @Query(value = """
             WITH semantic_search AS (
-                SELECT id, content, embedding <-> CAST(:queryEmbedding AS vector) AS vector_score
+            -- have to use window functions to get the rank of the chunks
+                SELECT id, ROW_NUMBER() OVER (ORDER BY embedding <-> CAST(:queryEmbedding AS vector) ASC) AS rank
                 FROM knowledge_chunks
                 WHERE (case_id = :caseId OR case_id IS NULL) AND deleted_at IS NULL
-                ORDER BY vector_score ASC
                 LIMIT 20
             ),
             keyword_search AS (
-                SELECT id, ts_rank_cd(to_tsvector('english', content), plainto_tsquery('english', :queryText)) AS keyword_score
+            -- have to use window functions to get the rank of the chunks
+                SELECT id, ROW_NUMBER() OVER (ORDER BY ts_rank_cd(to_tsvector('english', content), plainto_tsquery('english', :queryText)) DESC) AS rank
                 FROM knowledge_chunks
                 WHERE (case_id = :caseId OR case_id IS NULL) AND deleted_at IS NULL
-                ORDER BY keyword_score DESC
                 LIMIT 20
             )
             SELECT k.*
@@ -40,6 +39,9 @@ public interface KnowledgeChunkRepository extends JpaRepository<KnowledgeChunk, 
             LEFT JOIN keyword_search w ON k.id = w.id
             WHERE s.id IS NOT NULL OR w.id IS NOT NULL -- at least one search result must be found
             -- native query so we can send raw SQL queries to the database no JPAQL
+            -- RRF math 
+            -- 1.0 / (60 + s.rank) + 1.0 / (60 + w.rank) DESC   
+            ORDER BY COALESCE(1.0 / (60 + s.rank), 0.0) + COALESCE(1.0 / (60 + w.rank), 0.0) DESC   
             """, nativeQuery = true)
             List<KnowledgeChunk> findTopChunksHybrid(                                                             
                 @Param("caseId") UUID caseId,                                                                 

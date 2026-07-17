@@ -24,15 +24,19 @@ public class DiagnosticSessionService {
     private final MessageRepository messageRepository;
     private final CaseRepository caseRepository;
     private final AiPatientService aiPatientService;
+    private final com.marta.knowledge.service.KnowledgeRetrievalService knowledgeRetrievalService;
+
     // constructor to inject the dependencies
     public DiagnosticSessionService(DiagnosticSessionRepository diagnosticSessionRepository, 
                                     MessageRepository messageRepository, 
                                     CaseRepository caseRepository,
-                                    AiPatientService aiPatientService) {
+                                    AiPatientService aiPatientService,
+                                    com.marta.knowledge.service.KnowledgeRetrievalService knowledgeRetrievalService) {
         this.diagnosticSessionRepository = diagnosticSessionRepository;
         this.messageRepository = messageRepository;
         this.caseRepository = caseRepository;
         this.aiPatientService = aiPatientService;
+        this.knowledgeRetrievalService = knowledgeRetrievalService;
     }
 
     @Transactional
@@ -81,10 +85,18 @@ public class DiagnosticSessionService {
         Message studentMessage = new Message(session.getId(), SenderRole.STUDENT, request.getMessage());
         messageRepository.save(studentMessage);
 
-        // B. MOCK AI REPLY (We will replace this with real Claude API soon)
-        String aiReplyText = aiPatientService.chatWithStudent(session.getId(), request.getMessage());
-        
-        // C. Save the AI's reply
+        // B. RAG: Fetch relevant facts from the Postgres Vector Database!
+        String relevantFacts = knowledgeRetrievalService.getRelevantMedicalContext(
+                session.getCaseId(), 
+                request.getMessage()
+        );
+
+        String enrichedMessage = request.getMessage() + 
+                "\n\n[SYSTEM INSTRUCTION: Here is relevant academic medical literature and textbook content to assist with this case. Use it to inform your clinical reasoning and answer the student accurately. Do NOT mention that you are reading from a database:]\n\n" + 
+                relevantFacts;
+
+        // C. Send the enriched message to Claude (but we already saved the clean message to the DB for the student!)
+        String aiReplyText = aiPatientService.chatWithStudent(session.getId(), enrichedMessage);
         Message aiMessage = new Message(session.getId(), SenderRole.PATIENT, aiReplyText);
         messageRepository.save(aiMessage);
 
