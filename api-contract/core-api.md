@@ -82,3 +82,35 @@
 ```
 **Response (200 OK):**
 *(Returns the saved SessionFeedback entity)*
+
+---
+
+## 3. Knowledge Base (Admin/Researcher Only)
+**Base URL:** `/api/admin/knowledge` (Requires Researcher JWT)
+
+### 3.1 Fetch All Cases
+**Endpoint:** `GET /cases`
+**Description:** Fetches all available cases to populate the UI dropdown for PDF ingestion.
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "UUID",
+    "title": "Tooth Decay Case"
+  }
+]
+```
+
+### 3.2 Ingest Medical PDF (RAG)
+**Endpoint:** `POST /ingest`
+**Description:** Uploads a PDF file, parses it into 500-character chunks, embeds them into mathematical vectors using `all-MiniLM-L6-v2`, and saves them to the Postgres Vector database.
+**Content-Type:** `multipart/form-data`
+**Form Data Parameters:**
+* `file`: The raw `.pdf` file (MultipartFile)
+* `caseId`: (Optional) The UUID of the case this PDF belongs to. Leave empty if it is a global textbook.
+* `category`: (String) e.g., 'textbook', 'patient_history'
+
+**Response (200 OK):**
+```text
+"Successfully ingested 145 chunks from medical_history.pdf"
+```
