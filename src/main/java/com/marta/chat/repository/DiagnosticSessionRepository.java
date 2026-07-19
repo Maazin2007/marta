@@ -11,4 +11,7 @@ public interface DiagnosticSessionRepository extends JpaRepository<DiagnosticSes
 
     // Prevents a student from starting the same case twice!
     boolean existsByParticipantIdAndCaseId(UUID participantId, UUID caseId);
+
+    // Helps us check if a case is IN_PROGRESS or COMPLETED
+    java.util.Optional<DiagnosticSession> findByParticipantIdAndCaseId(UUID participantId, UUID caseId);
 }
