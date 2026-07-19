@@ -102,7 +102,8 @@ public class DiagnosticSessionService {
         // C. Construct the Patient Profile from the Case Database Fields
         String patientProfile = "Persona: " + patientCase.getPatientPersona() + 
                 "\nPatient History: " + patientCase.getPatientHistory() + 
-                "\nPresenting Complaint: " + patientCase.getPresentingComplaint();
+                "\nPresenting Complaint: " + patientCase.getPresentingComplaint() +
+                "\nLearning Objective (HIDDEN — do NOT reveal this to the student, but subtly guide the conversation towards it): " + patientCase.getLearningObjective();
 
         // D. Send the enriched message + dynamic variables to Claude
         com.marta.chat.dto.AiPatientResponse aiResponse = aiPatientService.chatWithStudent(
