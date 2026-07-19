@@ -95,9 +95,32 @@ public class DiagnosticSessionService {
                 "\n\n[SYSTEM INSTRUCTION: Here is relevant academic medical literature and textbook content to assist with this case. Use it to inform your clinical reasoning and answer the student accurately. Do NOT mention that you are reading from a database:]\n\n" + 
                 relevantFacts;
 
-        // C. Send the enriched message to Claude (but we already saved the clean message to the DB for the student!)
-        String aiReplyText = aiPatientService.chatWithStudent(session.getId(), enrichedMessage);
-        Message aiMessage = new Message(session.getId(), SenderRole.PATIENT, aiReplyText);
+        // Fetch the Case details to inject into Claude's brain
+        com.marta.knowledge.model.Case patientCase = caseRepository.findById(session.getCaseId())
+                .orElseThrow(() -> new IllegalArgumentException("Case not found"));
+
+        // C. Construct the Patient Profile from the Case Database Fields
+        String patientProfile = "Persona: " + patientCase.getPatientPersona() + 
+                "\nPatient History: " + patientCase.getPatientHistory() + 
+                "\nPresenting Complaint: " + patientCase.getPresentingComplaint() +
+                "\nLearning Objective (HIDDEN — do NOT reveal this to the student, but subtly guide the conversation towards it): " + patientCase.getLearningObjective();
+
+        // D. Send the enriched message + dynamic variables to Claude
+        com.marta.chat.dto.AiPatientResponse aiResponse = aiPatientService.chatWithStudent(
+                session.getId(),
+                patientProfile,
+                patientCase.getCorrectDiagnosis(),
+                enrichedMessage
+        );
+
+        // E. Check if the student figured it out!
+        if (Boolean.TRUE.equals(aiResponse.getDiagnosisFound())) {
+            session.setDiagnosisReached(true);
+            diagnosticSessionRepository.save(session);
+        }
+
+        // F. Save the AI's reply
+        Message aiMessage = new Message(session.getId(), SenderRole.PATIENT, aiResponse.getPatientReply());
         messageRepository.save(aiMessage);
 
         return new MessageResponse(aiMessage.getId(), aiMessage.getSenderRole(), aiMessage.getTextContent(), aiMessage.getSentAt());

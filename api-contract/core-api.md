@@ -3,8 +3,25 @@
 ## 1. Chat Sessions
 **Base URL:** `/api/chat` (Requires Participant JWT)
 
-### 1.1 Start a Session
-**Endpoint:** `POST /start`
+### 1.1 Fetch Available Cases (Student Dashboard)
+**Endpoint:** `GET /api/cases`
+**Description:** Fetches all active cases and their progress status (`NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`) for the currently logged-in student.
+**Response (200 OK):**
+```json
+[
+  {
+    "caseId": "UUID",
+    "title": "Tooth Decay Case",
+    "category": "Operative Dentistry",
+    "difficultyLevel": "Beginner",
+    "status": "IN_PROGRESS",
+    "sessionId": "UUID-of-session"
+  }
+]
+```
+
+### 1.2 Start a Session
+**Endpoint:** `POST /api/chat/start`
 **Body:**
 ```json
 {
