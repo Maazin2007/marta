@@ -1,15 +1,16 @@
 # Core API Contract (Chat, Cases & Feedback)
 
+> **Base URL:** All endpoints are prefixed with `/marta/api/v1`
 > **Auth Header Required:** All endpoints below require `Authorization: Bearer <JWT_Token>` unless stated otherwise.
 > See [auth.md](./auth.md) for authentication endpoints.
 
 ---
 
 ## 1. Student Cases Dashboard
-**Base URL:** `/api/cases` (Requires Student JWT)
+**Base URL:** `/cases` (Requires Student JWT)
 
 ### 1.1 Fetch Available Cases
-**Endpoint:** `GET /api/cases`
+**Endpoint:** `GET /cases`
 **Description:** Fetches all active cases with the logged-in student's progress status.
 **Headers:** `Authorization: Bearer <Student_JWT_Token>`
 **Response (200 OK):**
@@ -50,10 +51,10 @@
 ---
 
 ## 2. Chat Sessions
-**Base URL:** `/api/chat` (Requires Student JWT)
+**Base URL:** `/chat` (Requires Student JWT)
 
 ### 2.1 Start a Session
-**Endpoint:** `POST /api/chat/start`
+**Endpoint:** `POST /chat/start`
 **Headers:** `Authorization: Bearer <Student_JWT_Token>`
 **Body:**
 ```json
@@ -74,7 +75,7 @@
 **Error (400):** `"Session already exists"` — student already started this case.
 
 ### 2.2 Send a Message (Talk to AI Patient)
-**Endpoint:** `POST /api/chat/{sessionId}/message`
+**Endpoint:** `POST /chat/{sessionId}/message`
 **Headers:** `Authorization: Bearer <Student_JWT_Token>`
 **Body:**
 ```json
@@ -99,7 +100,7 @@
 > - When `diagnosisReached` becomes true on the session, subsequent messages will be blocked.
 
 ### 2.3 Get Chat History
-**Endpoint:** `GET /api/chat/{sessionId}/messages`
+**Endpoint:** `GET /chat/{sessionId}/messages`
 **Headers:** `Authorization: Bearer <Student_JWT_Token>`
 **Response (200 OK):**
 ```json
@@ -122,10 +123,10 @@
 ---
 
 ## 3. Feedback Survey
-**Base URL:** `/api/feedback` (Requires Student JWT)
+**Base URL:** `/feedback` (Requires Student JWT)
 
 ### 3.1 Submit Post-Session Feedback
-**Endpoint:** `POST /api/feedback/submit`
+**Endpoint:** `POST /feedback/submit`
 **Headers:** `Authorization: Bearer <Student_JWT_Token>`
 **Description:** Submits the 12-item academic questionnaire after completing a case.
 **Body:**
@@ -197,6 +198,6 @@
 | Endpoint Group | Limit | Window |
 |---|---|---|
 | Auth routes (`/auth/*`) | 5 requests | per minute |
-| Chat routes (`/api/chat/*`) | 1 request | per 3 seconds |
+| Chat routes (`/chat/*`) | 1 request | per 3 seconds |
 
 When rate limited, the API returns **429 Too Many Requests**.

@@ -13,7 +13,7 @@ All authentication endpoints are located under the base URL `/marta/api/v1/auth`
   "sex": "MALE", // Must match the enum values
   "selfReportedConfidence": 0.75, // Must be between 0.0 and 1.0
   "password": "securepassword123", // Minimum 8 characters
-  "pin": "1234" // Exactly 4 digits
+  "pin": "123456" // Exactly 6 digits
 }
 ```
 
@@ -27,7 +27,7 @@ All authentication endpoints are located under the base URL `/marta/api/v1/auth`
 ### Error Response (400 Bad Request) - Validation Failure
 ```json
 {
-  "pin": "PIN must be exactly 4 digits",
+  "pin": "PIN must be exactly 6 digits",
   "password": "Password must be at least 8 characters long"
 }
 ```
@@ -65,13 +65,13 @@ All authentication endpoints are located under the base URL `/marta/api/v1/auth`
 
 ## 3. Reset Password
 **Endpoint:** `POST /reset-password`
-**Description:** Resets the user's password using their 4-digit PIN.
+**Description:** Resets the user's password using their 6-digit PIN.
 
 ### Request Body (JSON)
 ```json
 {
   "participantId": "A1B2C3D4",
-  "pin": "1234",
+  "pin": "123456",
   "newPassword": "newsecurepassword456"
 }
 ```
@@ -100,7 +100,7 @@ To log a user out, simply delete the JWT token from the client's `localStorage` 
 ---
 
 ## 5. Researcher Admin Routes
-**Base URL:** `/api/auth/researcher`
+**Base URL:** `/auth/researcher`
 
 ### 5.1 Login
 **Endpoint:** `POST /login`
@@ -111,7 +111,7 @@ To log a user out, simply delete the JWT token from the client's `localStorage` 
 {
   "email": "admin@marta.edu",
   "password": "securepassword123",
-  "pin": "1234"
+  "pin": "123456"
 }
 ```
 **Success Response (200 OK):**

@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/cases")
+@RequestMapping("/cases")
 public class StudentCaseController {
 
     private final CaseRepository caseRepository;

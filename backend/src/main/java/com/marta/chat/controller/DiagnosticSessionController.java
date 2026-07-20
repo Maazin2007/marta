@@ -22,7 +22,7 @@ import com.marta.chat.service.DiagnosticSessionService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/chat")
 public class DiagnosticSessionController {
     
     private final DiagnosticSessionService diagnosticSessionService;

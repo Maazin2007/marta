@@ -21,7 +21,7 @@ import com.marta.auth.service.ResearcherService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/auth/researcher")
+@RequestMapping("/auth/researcher")
 public class ResearcherController {
 
     private final ResearcherService researcherService;

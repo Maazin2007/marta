@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/feedback")
+@RequestMapping("/feedback")
 public class FeedbackController {
 
     private final FeedbackService feedbackService;
