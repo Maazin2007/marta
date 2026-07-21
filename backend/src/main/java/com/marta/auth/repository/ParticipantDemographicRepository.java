@@ -9,5 +9,5 @@ import com.marta.auth.model.ParticipantDemographic;
 
 public interface ParticipantDemographicRepository extends JpaRepository<ParticipantDemographic, UUID> {
     Optional<ParticipantDemographic> findByParticipantID(String participantID);
-    void deleteByParticipantId(String participantId);
+    void deleteByParticipantID(String participantID);
 }

@@ -58,7 +58,7 @@ public class ResearcherService {
         // first check if the participant exists
         Participant participant = participantRepository.findByParticipantId(participantId).orElseThrow(() -> new IllegalArgumentException("Participant not found"));
         // delete the participant demographic and participant
-        participantDemographicRepository.deleteByParticipantId(participantId);
+        participantDemographicRepository.deleteByParticipantID(participantId);
         participantRepository.delete(participant);
     }
 }

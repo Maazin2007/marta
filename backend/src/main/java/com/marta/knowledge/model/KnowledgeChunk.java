@@ -3,6 +3,7 @@ package com.marta.knowledge.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.Array;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -37,6 +38,7 @@ public class KnowledgeChunk {
 
     // This will hold our pgvector mathematical array for the embedding!
     @JdbcTypeCode(SqlTypes.VECTOR)
+    @Array(length = 384)
     @Column(name = "embedding", updatable = true, nullable = false)
     private float[] embedding;
 

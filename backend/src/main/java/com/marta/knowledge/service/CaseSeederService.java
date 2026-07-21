@@ -3,7 +3,9 @@ package com.marta.knowledge.service;
 import com.marta.knowledge.model.Case;
 import com.marta.knowledge.repository.CaseRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 
@@ -11,15 +13,40 @@ import java.util.List;
 public class CaseSeederService {
 
     private final CaseRepository caseRepository;
+    private final EntityManager entityManager;
+    private final TransactionTemplate transactionTemplate;
 
-    // Inject the repository via constructor
-    public CaseSeederService(CaseRepository caseRepository) {
+    public CaseSeederService(
+            CaseRepository caseRepository,
+            EntityManager entityManager,
+            TransactionTemplate transactionTemplate) {
         this.caseRepository = caseRepository;
+        this.entityManager = entityManager;
+        this.transactionTemplate = transactionTemplate;
+    }
+
+    private void ensureCaseTextColumns() {
+        List<String> migrations = List.of(
+            "ALTER TABLE cases ALTER COLUMN patient_history TYPE TEXT",
+            "ALTER TABLE cases ALTER COLUMN presenting_complaint TYPE TEXT",
+            "ALTER TABLE cases ALTER COLUMN learning_objective TYPE TEXT",
+            "ALTER TABLE cases ALTER COLUMN patient_persona TYPE TEXT"
+        );
+        for (String sql : migrations) {
+            try {
+                entityManager.createNativeQuery(sql).executeUpdate();
+            } catch (Exception ignored) {
+                // Column may already use TEXT or table may not exist yet.
+            }
+        }
     }
 
     @PostConstruct
     public void seedCases() {
-        if (caseRepository.count() == 0) {
+        transactionTemplate.executeWithoutResult(status -> {
+            ensureCaseTextColumns();
+
+            if (caseRepository.count() == 0) {
             System.out.println("🦷 No clinical cases found in DB. Seeding the 4 scenarios...");
 
             List<Case> casesToSeed = List.of(
@@ -145,5 +172,6 @@ public class CaseSeederService {
         } else {
             System.out.println("✅ Clinical cases already exist in DB. Skipping seeder.");
         }
+        });
     }
 }
