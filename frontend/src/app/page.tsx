@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-950 font-sans min-h-screen text-zinc-50">
       {/*
-        DESIGN CHOICE: We use 'min-h-screen' to ensure the black background stretches
+        DESIGN CHOIE: We use 'min-h-screen' to ensure the black background stretches
         all the way to the bottom of the screen, even if the content is short.
 
         flex flex-col: Stack the header, tabs, and form vertically
