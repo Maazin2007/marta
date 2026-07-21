@@ -18,6 +18,8 @@ PROJECT.md
 PLAN.md
 ## variables
 /src/main/resources/application.properties
+backend/src/main/resources/application.properties
+backend/cp.txt
 ### IntelliJ IDEA ###
 .idea
 *.iws
