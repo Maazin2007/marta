@@ -9,5 +9,5 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class LoginResponse {
     private String participantId;
-    private String JWTToken;
+    private String token;
 }

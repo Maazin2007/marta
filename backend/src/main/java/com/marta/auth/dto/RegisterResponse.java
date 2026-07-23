@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class RegisterResponse {
-    private String participantID;
+    private String participantId;
 }

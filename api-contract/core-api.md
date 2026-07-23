@@ -69,7 +69,9 @@
   "participantId": "UUID",
   "caseId": "UUID",
   "diagnosisReached": false,
-  "startedAt": "2026-07-16T12:00:00Z"
+  "studentFinalDiagnosis": null,
+  "startedAt": "2026-07-16T12:00:00Z",
+  "completedAt": null
 }
 ```
 **Error (400):** `"Session already exists"` — student already started this case.
@@ -87,16 +89,15 @@
 ```json
 {
   "id": "UUID-of-message",
-  "senderRole": "PATIENT",
-  "textContent": "Yeah, it really hurts when I bite down on something hard. Like a sharp shooting pain.",
+  "sender": "PATIENT",
+  "text": "Yeah, it really hurts when I bite down on something hard. Like a sharp shooting pain.",
   "sentAt": "2026-07-16T12:01:00Z"
 }
 ```
 **Error (400):** `"This case has already been completed."` — student already reached the correct diagnosis.
 
 > **Frontend Notes:**
-> - The response field names are `senderRole` (not `sender`) and `textContent` (not `text`).
-> - `senderRole` will be either `"STUDENT"` or `"PATIENT"`.
+> - `sender` will be either `"STUDENT"` or `"PATIENT"`.
 > - When `diagnosisReached` becomes true on the session, subsequent messages will be blocked.
 
 ### 2.3 Get Chat History
@@ -107,14 +108,14 @@
 [
   {
     "id": "UUID",
-    "senderRole": "STUDENT",
-    "textContent": "Hello, what brings you in today?",
+    "sender": "STUDENT",
+    "text": "Hello, what brings you in today?",
     "sentAt": "2026-07-16T12:00:10Z"
   },
   {
     "id": "UUID",
-    "senderRole": "PATIENT",
-    "textContent": "My tooth has been really bothering me lately.",
+    "sender": "PATIENT",
+    "text": "My tooth has been really bothering me lately.",
     "sentAt": "2026-07-16T12:00:12Z"
   }
 ]

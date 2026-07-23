@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -24,9 +25,11 @@ public class Participant {
     @Column(name="participant_id", unique = true, updatable = false, nullable = false)
     private String participantId;
 
+    @JsonIgnore
     @Column(name="password_hash", updatable = true, nullable = false)
     private String passwordHash;
 
+    @JsonIgnore
     @Column(name="pin_hash", updatable = true, nullable = false)
     private String pinHash;
 
