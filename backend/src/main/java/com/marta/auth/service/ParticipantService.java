@@ -42,7 +42,7 @@ public class ParticipantService {
         // generate a new participant ID
         String participantId = generateParticipantId();
         // while the participant ID is already in use, generate a new one
-        while (participantRepository.findByParticipantId(participantId) != null) {
+        while (participantRepository.existsByParticipantId(participantId)) {
             participantId = generateParticipantId();
         }
 
@@ -70,9 +70,10 @@ public class ParticipantService {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         // StringBuilder is a mutable sequence of characters efficent way of concatenating strings
         StringBuilder sb = new StringBuilder();
+        sb.append("P"); // Always start with 'P'
         // SecureRandom over Random because it is more secure and is better practice for applications
         java.security.SecureRandom random = new java.security.SecureRandom();
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 7; i++) { // 7 random chars to make total length 8
             // get random integer between 0 and the length of the chars string
             // and append the character at that index to the StringBuilder
             sb.append(chars.charAt(random.nextInt(chars.length())));
