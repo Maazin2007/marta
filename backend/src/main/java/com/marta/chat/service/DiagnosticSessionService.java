@@ -4,8 +4,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.marta.chat.dto.AiPatientResponse;
 import com.marta.chat.dto.MessageResponse;
 import com.marta.chat.dto.SendMessageRequest;
 import com.marta.chat.model.DiagnosticSession;
@@ -19,7 +25,12 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class DiagnosticSessionService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(DiagnosticSessionService.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     private final DiagnosticSessionRepository diagnosticSessionRepository;
     private final MessageRepository messageRepository;
     private final CaseRepository caseRepository;
@@ -81,6 +92,10 @@ public class DiagnosticSessionService {
             throw new IllegalArgumentException("This case has already been completed.");
         }
 
+        if (java.time.LocalDateTime.now().isAfter(session.getStartedAt().plusMinutes(10))) {
+            return new MessageResponse(UUID.randomUUID(), SenderRole.SYSTEM, "TIME_UP", java.time.LocalDateTime.now(), false);
+        }
+
         // A. Save the student's message
         Message studentMessage = new Message(session.getId(), SenderRole.STUDENT, request.getMessage());
         messageRepository.save(studentMessage);
@@ -106,23 +121,53 @@ public class DiagnosticSessionService {
                 "\nLearning Objective (HIDDEN — do NOT reveal this to the student, but subtly guide the conversation towards it): " + patientCase.getLearningObjective();
 
         // D. Send the enriched message + dynamic variables to Claude
-        com.marta.chat.dto.AiPatientResponse aiResponse = aiPatientService.chatWithStudent(
+        String rawAiOutput = aiPatientService.chatWithStudent(
                 session.getId(),
                 patientProfile,
                 patientCase.getCorrectDiagnosis(),
                 enrichedMessage
         );
 
+        AiPatientResponse aiResponse = parseAiOutput(rawAiOutput);
+
         // E. Check if the student figured it out!
+        boolean caseCompleted = false;
         if (Boolean.TRUE.equals(aiResponse.getDiagnosisFound())) {
             session.setDiagnosisReached(true);
             diagnosticSessionRepository.save(session);
+            caseCompleted = true;
         }
 
-        // F. Save the AI's reply
+        // F. Save the AI's reply ONLY if the case isn't completed
+        // We don't want to preserve the patient's confused "I don't know what that means" reply in history
         Message aiMessage = new Message(session.getId(), SenderRole.PATIENT, aiResponse.getPatientReply());
-        messageRepository.save(aiMessage);
+        if (!caseCompleted) {
+            messageRepository.save(aiMessage);
+        }
 
-        return new MessageResponse(aiMessage.getId(), aiMessage.getSenderRole(), aiMessage.getTextContent(), aiMessage.getSentAt());
+        return new MessageResponse(aiMessage.getId(), aiMessage.getSenderRole(), aiMessage.getTextContent(), aiMessage.getSentAt(), caseCompleted);
+    }
+
+    // Claude sometimes wraps its JSON in prose or markdown fences, or drops the wrapper entirely
+    // and just speaks as the patient. Rather than failing the student's turn, fall back to
+    // treating whatever came back as the spoken reply.
+    private AiPatientResponse parseAiOutput(String rawOutput) {
+        String text = rawOutput == null ? "" : rawOutput.trim();
+
+        int objectStart = text.indexOf('{');
+        int objectEnd = text.lastIndexOf('}');
+        if (objectStart >= 0 && objectEnd > objectStart) {
+            try {
+                AiPatientResponse parsed = OBJECT_MAPPER.readValue(
+                        text.substring(objectStart, objectEnd + 1), AiPatientResponse.class);
+                if (parsed.getPatientReply() != null && !parsed.getPatientReply().isBlank()) {
+                    return parsed;
+                }
+            } catch (JsonProcessingException e) {
+                log.warn("AI patient reply was not valid JSON, falling back to raw text: {}", e.getMessage());
+            }
+        }
+
+        return new AiPatientResponse(text, false, null);
     }
 }

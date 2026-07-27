@@ -13,6 +13,8 @@ public class CaseStatusResponse {
     private String title;
     private String category;
     private String difficultyLevel;
-    private String status; // "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
+    private String presentingComplaint;
+    private String status; // "NOT_STARTED", "IN_PROGRESS", "COMPLETED", "PENDING_FEEDBACK"
     private UUID sessionId; // Provide the sessionId if it's IN_PROGRESS or COMPLETED so the frontend can resume
+    private java.time.LocalDateTime startedAt;
 }

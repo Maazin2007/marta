@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #f6f5f4;
+  --canvas-surface: #ffffff;
+  --ink: #000000;
+  --ink-secondary: #31302e;
+  --ink-muted: #615d59;
+  --ink-faint: #a39e98;
+  --hairline: #e6e6e6;
+  --primary: #0075de;
+  --primary-active: #005bab;
+  --secondary: #213183;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--canvas);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Dark mode variant — toggled by adding .dark class to <html> */
+@variant dark (&:where(.dark, .dark *));
+
+/* Dark mode token overrides */
+.dark {
+  --canvas: #0f0f0e;
+  --canvas-soft: #141312;
+  --surface: #1a1918;
+  --ink: #f0ede9;
+  --ink-secondary: #c9c4be;
+  --ink-muted: #8a8480;
+  --ink-faint: #5a5652;
+  --hairline: #2e2c2a;
+  --primary: #3d9eff;       /* slightly lighter blue for dark bg contrast */
+  --primary-active: #5aadff;
+}
+
+/* Note: This prevents scrolling on the body level. Crucial for chat layout. Non-chat layouts will need internal scroll areas if they scroll. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-inter), Inter, -apple-system, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
 }

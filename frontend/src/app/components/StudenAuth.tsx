@@ -1,48 +1,41 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function StudentAuth() {
   const router = useRouter();
-
   const [isLogin, setIsLogin] = useState(true);
-  
-  // Login fields
   const [participantId, setParticipantId] = useState('');
-  
-  // Register fields
-  const [yearOfStudy, setYearOfStudy] = useState('3');
-  const [sex, setSex] = useState('MALE');
-  const [confidence, setConfidence] = useState<number>(50); // 0-100 UI, 0.0-1.0 API
+  const [password, setPassword] = useState('');
+  const [yearOfStudy, setYearOfStudy] = useState('');
+  const [sex, setSex] = useState('');
+  const [confidence, setConfidence] = useState<number>(50);
   const [pin, setPin] = useState('');
 
-  // Shared fields
-  const [password, setPassword] = useState('');
-
-  // Status
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{ pin?: string; password?: string }>({});
-  const [registeredId, setRegisteredId] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [registeredId, setRegisteredId] = useState<string | null>(null);
+  const [isForgot, setIsForgot] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   const resetForm = () => {
-    setIsLogin(true);
     setParticipantId('');
     setPassword('');
-    setYearOfStudy('3');
-    setSex('MALE');
+    setYearOfStudy('');
+    setSex('');
     setConfidence(50);
     setPin('');
-    setError('');
+    setError(null);
     setFieldErrors({});
-    setRegisteredId('');
+    setResetSuccess(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError(null);
     setFieldErrors({});
 
     try {
@@ -51,17 +44,25 @@ export default function StudentAuth() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ participantId, password }),
       });
-      const data = await res.json();
-      
+
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await res.json() : null;
+
       if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
+        if (data?.errors) {
+          setFieldErrors(data.errors);
+        } else {
+          setError(data?.message || 'Login failed. Please check your credentials.');
+        }
+        return;
       }
 
       localStorage.setItem('jwt_token', data.token);
       localStorage.setItem('participant_id', data.participantId);
       router.push('/student-dashboard');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+    } catch (err) {
+      console.error(err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -70,36 +71,94 @@ export default function StudentAuth() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError(null);
     setFieldErrors({});
 
     try {
-      const payload = {
-        yearOfStudy: parseInt(yearOfStudy, 10),
-        sex,
-        selfReportedConfidence: confidence / 100, // normalize to 0.0 - 1.0
-        password,
-        pin,
-      };
-
       const res = await fetch('/marta/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          password,
+          yearOfStudy: parseInt(yearOfStudy, 10),
+          sex,
+          selfReportedConfidence: confidence / 100,
+          pin,
+        }),
       });
-      const data = await res.json();
-      
+
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await res.json() : null;
+
       if (!res.ok) {
-        if (data.pin || data.password) {
-          setFieldErrors({ pin: data.pin, password: data.password });
-          return;
+        if (data?.errors) {
+          setFieldErrors(data.errors);
+        } else {
+          setError(data?.message || 'Registration failed. Please check your inputs.');
         }
-        throw new Error(data.error || 'Registration failed');
+        return;
       }
 
-      setRegisteredId(data.participantId);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during registration');
+      if (data?.participantId) {
+        setRegisteredId(data.participantId);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setFieldErrors({});
+
+    let hasErrors = false;
+    const newFieldErrors: Record<string, string> = {};
+
+    if (!participantId.trim()) {
+      newFieldErrors.participantId = 'Participant ID is required';
+      hasErrors = true;
+    }
+    if (!/^\d{6}$/.test(pin)) {
+      newFieldErrors.pin = 'PIN must be exactly 6 digits';
+      hasErrors = true;
+    }
+    if (password.length < 8) {
+      newFieldErrors.password = 'Password must be at least 8 characters';
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      setFieldErrors(newFieldErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/marta/api/v1/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantId, pin, newPassword: password }),
+      });
+
+      if (!res.ok) {
+        setError('Invalid Participant ID or PIN. Please try again.');
+        return;
+      }
+
+      setResetSuccess(true);
+      setTimeout(() => {
+        setIsForgot(false);
+        setIsLogin(true);
+        resetForm();
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -107,194 +166,372 @@ export default function StudentAuth() {
 
   if (registeredId) {
     return (
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-8 shadow-sm">
-        <div className="text-center">
-          <h2 className="text-xl font-medium text-white mb-2">Registration Successful</h2>
-          <p className="text-zinc-400 mb-6">Please save your Participant ID. You will need it to login.</p>
-          
-          <div className="bg-zinc-950 border border-zinc-700 rounded-lg p-4 mb-8">
-            <span className="block text-sm font-medium text-zinc-500 mb-1">Participant ID</span>
-            <span className="text-2xl font-mono text-white tracking-wider">{registeredId}</span>
-          </div>
-
-          <button
-            onClick={resetForm}
-            className="w-full bg-white text-black font-medium py-2 px-4 rounded-md hover:bg-zinc-100 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
-          >
-            Continue to Login
-          </button>
+      <div className="w-full text-center py-4">
+        <h2 className="text-[26px] font-bold tracking-[-0.625px] text-black mb-2">
+          Registration Successful
+        </h2>
+        <p className="text-[15px] text-[#615d59] mb-6">
+          Please save your Participant ID to sign in.
+        </p>
+        
+        <div className="bg-[#f6f5f4] border border-[#e6e6e6] rounded-[12px] p-6 mb-6">
+          <p className="text-[12px] font-semibold tracking-[0.125px] text-[#a39e98] uppercase mb-2">
+            Your Participant ID
+          </p>
+          <p className="text-[32px] font-bold tracking-widest text-black font-mono">
+            {registeredId}
+          </p>
         </div>
+
+        <button
+          onClick={() => {
+            setRegisteredId(null);
+            setIsLogin(true);
+            resetForm();
+          }}
+          className="w-full bg-[#0075de] text-white rounded-full py-2.5 text-[16px] font-medium hover:bg-[#005bab] active:scale-[0.98] transition-all"
+        >
+          Continue to Login
+        </button>
+      </div>
+    );
+  }
+
+  if (isForgot) {
+    return (
+      <div className="w-full">
+        {resetSuccess ? (
+          <div className="text-center py-4">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-[16px] text-green-800 font-medium dark:text-[#f0ede9]">Password reset! You can now sign in.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-[17px] font-semibold text-black dark:text-[#f0ede9] mb-1">Reset Password</h2>
+              <p className="text-[14px] text-[#615d59] dark:text-[#8a8480]">Enter your Participant ID and 6-digit PIN to set a new password.</p>
+            </div>
+            
+            {error && (
+              <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-[8px] text-[14px] text-red-600 mb-4">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                Participant ID
+              </label>
+              <input
+                type="text"
+                value={participantId}
+                onChange={(e) => setParticipantId(e.target.value)}
+                className={`w-full bg-white dark:bg-[#141312] border dark:border-[#2e2c2a] rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                  fieldErrors.participantId
+                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                    : 'border-[#e6e6e6] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                }`}
+                required
+              />
+              {fieldErrors.participantId && (
+                <p className="mt-1 text-[13px] text-red-500 dark:text-[#8a8480]">{fieldErrors.participantId}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                PIN
+              </label>
+              <input
+                type="text"
+                maxLength={6}
+                inputMode="numeric"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                placeholder="6-digit PIN"
+                className={`w-full bg-white dark:bg-[#141312] border dark:border-[#2e2c2a] rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                  fieldErrors.pin
+                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                    : 'border-[#e6e6e6] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                }`}
+                required
+              />
+              {fieldErrors.pin && (
+                <p className="mt-1 text-[13px] text-red-500 dark:text-[#8a8480]">{fieldErrors.pin}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`w-full bg-white dark:bg-[#141312] border dark:border-[#2e2c2a] rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                  fieldErrors.password
+                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                    : 'border-[#e6e6e6] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                }`}
+                required
+              />
+              {fieldErrors.password && (
+                <p className="mt-1 text-[13px] text-red-500 dark:text-[#8a8480]">{fieldErrors.password}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#0075de] text-white rounded-full py-2.5 text-[16px] font-medium hover:bg-[#005bab] active:scale-[0.98] transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Please wait...' : 'Reset Password'}
+            </button>
+
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgot(false);
+                  setIsLogin(true);
+                  resetForm();
+                }}
+                className="text-[13px] text-[#615d59] hover:text-black dark:text-[#8a8480] dark:hover:text-[#f0ede9]"
+              >
+                Back to sign in
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-8 shadow-sm">
-      <div className="mb-8">
-        <h2 className="text-xl font-medium text-white mb-1">
-          {isLogin ? 'Welcome back' : 'Create an account'}
-        </h2>
-        <p className="text-sm text-zinc-400">
-          {isLogin 
-            ? 'Enter your credentials to access your dashboard' 
-            : 'Register to participate in the dental education program'}
-        </p>
-      </div>
-
-      <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-5">
-        {isLogin && (
-          <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="participantId">
-              Participant ID
-            </label>
-            <input
-              id="participantId"
-              type="text"
-              value={participantId}
-              onChange={(e) => setParticipantId(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-150"
-              required
-            />
+    <div className="w-full">
+      <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+        {error && (
+          <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-[8px] text-[14px] text-red-600 dark:text-red-400 mb-4">
+            {error}
           </div>
         )}
 
-        {!isLogin && (
+        {isLogin ? (
           <>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="yearOfStudy">
-                  Year of Study
-                </label>
-                <div className="relative">
-                  <select
-                    id="yearOfStudy"
-                    value={yearOfStudy}
-                    onChange={(e) => setYearOfStudy(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-150 appearance-none"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map(year => (
-                      <option key={year} value={year}>Year {year}</option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400">
-                    <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-                </div>
+            <div>
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                Participant ID
+              </label>
+              <input
+                type="text"
+                value={participantId}
+                onChange={(e) => setParticipantId(e.target.value)}
+                className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                  fieldErrors.participantId
+                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                    : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                }`}
+                placeholder="Enter your ID"
+                required
+              />
+              {fieldErrors.participantId && (
+                <p className="mt-1 text-[13px] text-red-500">{fieldErrors.participantId}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                  fieldErrors.password
+                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                    : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                }`}
+                placeholder="••••••••"
+                required
+              />
+              {fieldErrors.password && (
+                <p className="mt-1 text-[13px] text-red-500">{fieldErrors.password}</p>
+              )}
+              <div className="flex justify-end mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgot(true);
+                    resetForm();
+                  }}
+                  className="text-[13px] text-[#0075de] hover:underline"
+                >
+                  Forgot password?
+                </button>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="sex">
-                  Sex
-                </label>
-                <div className="relative">
-                  <select
-                    id="sex"
-                    value={sex}
-                    onChange={(e) => setSex(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-150 appearance-none"
-                  >
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400">
-                    <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-                </div>
-              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                  fieldErrors.password
+                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                    : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                }`}
+                placeholder="Choose a strong password"
+                required
+              />
+              {fieldErrors.password && (
+                <p className="mt-1 text-[13px] text-red-500">{fieldErrors.password}</p>
+              )}
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-sm font-medium text-zinc-400" htmlFor="confidence">
-                  Self-Reported Confidence
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                Year of Study
+              </label>
+              <div className="relative">
+                <select
+                  value={yearOfStudy}
+                  onChange={(e) => setYearOfStudy(e.target.value)}
+                  className={`appearance-none w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] focus:outline-none transition-all ${
+                    fieldErrors.yearOfStudy
+                      ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                      : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                  }`}
+                  required
+                >
+                  <option value="" disabled>Select Year</option>
+                  <option value="1">Year 1</option>
+                  <option value="2">Year 2</option>
+                  <option value="3">Year 3</option>
+                  <option value="4">Year 4</option>
+                  <option value="5">Year 5</option>
+                  <option value="6">Year 6</option>
+                </select>
+                <svg
+                  className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#a39e98] dark:text-[#5a5652] w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              {fieldErrors.yearOfStudy && (
+                <p className="mt-1 text-[13px] text-red-500">{fieldErrors.yearOfStudy}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                Sex
+              </label>
+              <div className="relative">
+                <select
+                  value={sex}
+                  onChange={(e) => setSex(e.target.value)}
+                  className={`appearance-none w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] focus:outline-none transition-all ${
+                    fieldErrors.sex
+                      ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                      : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                  }`}
+                  required
+                >
+                  <option value="" disabled>Select Sex</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
+                <svg
+                  className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#a39e98] dark:text-[#5a5652] w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              {fieldErrors.sex && (
+                <p className="mt-1 text-[13px] text-red-500">{fieldErrors.sex}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be]">
+                  Diagnostic Confidence
                 </label>
-                <span className="text-xs font-medium text-white bg-zinc-800 px-2 py-0.5 rounded">
+                <span className="px-2 py-0.5 bg-[#f6f5f4] dark:bg-[#141312] border border-[#e6e6e6] dark:border-[#2e2c2a] rounded-[4px] text-[12px] font-semibold text-[#31302e] dark:text-[#c9c4be]">
                   {confidence}%
                 </span>
               </div>
               <input
-                id="confidence"
                 type="range"
                 min="0"
                 max="100"
                 value={confidence}
                 onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
-                className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#0075de] bg-[#e6e6e6] dark:bg-[#2e2c2a] mt-2"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="pin">
-                6-Digit PIN
+              <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
+                Course PIN
               </label>
               <input
-                id="pin"
                 type="text"
-                maxLength={6}
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-                className={`w-full bg-zinc-950 border ${fieldErrors.pin ? 'border-red-500 focus:ring-red-500' : 'border-zinc-700 focus:ring-blue-500'} rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:border-transparent transition-shadow duration-150`}
-                placeholder="123456"
+                onChange={(e) => setPin(e.target.value)}
+                className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                  fieldErrors.pin
+                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                    : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                }`}
+                placeholder="6-digit PIN used for password reset"
                 required
               />
               {fieldErrors.pin && (
-                <p className="mt-1.5 text-sm text-red-500">{fieldErrors.pin}</p>
+                <p className="mt-1 text-[13px] text-red-500">{fieldErrors.pin}</p>
               )}
             </div>
           </>
         )}
 
-        <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5" htmlFor="password">
-            Password {isLogin ? '' : <span className="text-zinc-500 font-normal">(min 8 characters)</span>}
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={`w-full bg-zinc-950 border ${fieldErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-zinc-700 focus:ring-blue-500'} rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:border-transparent transition-shadow duration-150`}
-            required
-            minLength={isLogin ? undefined : 8}
-          />
-          {fieldErrors.password && (
-            <p className="mt-1.5 text-sm text-red-500">{fieldErrors.password}</p>
-          )}
-        </div>
-
-        {error && (
-          <div className="bg-red-900/20 border border-red-900/50 text-red-500 text-sm py-2.5 px-3 rounded-md">
-            {error}
-          </div>
-        )}
-
         <button
           type="submit"
           disabled={loading}
-          className={`w-full font-medium py-2.5 px-4 rounded-md transition-all duration-150 mt-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed ${
-            isLogin 
-              ? 'bg-white text-black hover:bg-zinc-100 focus:ring-zinc-400' 
-              : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
-          }`}
+          className="w-full bg-[#0075de] text-white rounded-full py-2.5 text-[16px] font-medium hover:bg-[#005bab] active:scale-[0.98] transition-all mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Processing...' : (isLogin ? 'Sign in' : 'Create account')}
+          {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}
         </button>
-      </form>
 
-      <div className="mt-6 text-center">
-        <button
-          type="button"
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setError('');
-            setFieldErrors({});
-          }}
-          className="text-sm font-medium text-zinc-500 hover:text-zinc-300 underline underline-offset-4 transition-colors duration-150"
-        >
-          {isLogin ? "Don't have an account? Register" : 'Already have an account? Sign in'}
-        </button>
-      </div>
+        <p className="mt-4 text-center text-[14px] text-[#615d59] dark:text-[#8a8480]">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <span
+            onClick={() => {
+              setIsLogin(!isLogin);
+              resetForm();
+            }}
+            className="text-[#0075de] hover:underline cursor-pointer"
+          >
+            {isLogin ? 'Register here' : 'Sign in here'}
+          </span>
+        </p>
+      </form>
     </div>
   );
 }

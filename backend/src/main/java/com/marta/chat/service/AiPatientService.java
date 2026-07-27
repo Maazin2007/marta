@@ -2,8 +2,6 @@ package com.marta.chat.service;
 
 import java.util.UUID;
 
-import com.marta.chat.dto.AiPatientResponse;
-
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
@@ -32,9 +30,19 @@ public interface  AiPatientService {
         "1. Put your spoken conversational reply in the 'patientReply' field.",
         "2. Analyze the student's message carefully. If they explicitly and confidently DECLARE the correct diagnosis to you (e.g., 'I believe you have X', 'My diagnosis is X', 'You have X'), set 'diagnosisFound' to true and record their stated diagnosis in the 'diagnosis' field.",
         "3. If the student is merely exploring, asking a question ('Could it be X?', 'I'm thinking maybe X'), or has not reached the correct diagnosis, 'diagnosisFound' MUST remain false.",
-        "4. Accept reasonable clinical synonyms or variations of the correct diagnosis (e.g., 'cracked tooth' for 'Cracked Tooth Syndrome', 'high bite' for 'Hyperocclusion')."
+        "4. Accept reasonable clinical synonyms or variations of the correct diagnosis (e.g., 'cracked tooth' for 'Cracked Tooth Syndrome', 'high bite' for 'Hyperocclusion').",
+
+        "OUTPUT FORMAT (MANDATORY):",
+        "Your entire response must be a single raw JSON object and nothing else. No greeting, no explanation, no markdown code fences, no text before or after the object.",
+        "The object has exactly these three keys:",
+        "\"patientReply\": string — the words you say out loud as the patient.",
+        "\"diagnosisFound\": boolean — true only when the student has explicitly declared the correct diagnosis.",
+        "\"diagnosis\": string or null — the diagnosis the student stated, or null when diagnosisFound is false.",
+        "Example of a valid response:",
+        "{\"patientReply\": \"It's this back tooth, it kills me when I chew.\", \"diagnosisFound\": false, \"diagnosis\": null}",
+        "The BREVITY rule applies to the text inside 'patientReply' only — the JSON wrapper is always required, on every single turn."
     })
-    AiPatientResponse chatWithStudent(
+    String chatWithStudent(
             @MemoryId UUID sessionId, 
             @dev.langchain4j.service.V("patientProfile") String patientProfile,
             @dev.langchain4j.service.V("correctDiagnosis") String correctDiagnosis,
