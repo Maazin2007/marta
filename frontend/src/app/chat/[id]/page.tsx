@@ -45,6 +45,7 @@ export default function ChatPage() {
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [isPatientTalking, setIsPatientTalking] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const [timeExpired, setTimeExpired] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -64,9 +65,7 @@ export default function ChatPage() {
         if (parsed.status === 'PENDING_FEEDBACK') {
           setIsSurveyOpen(true);
         }
-        if (parsed.status === 'COMPLETED' || parsed.status === 'FAILED') {
-          setDiagnosisReached(true);
-        }
+        // Do not set diagnosisReached to true here, otherwise the success overlay appears when viewing history
       } catch {
         // malformed — leave caseData null, UI handles gracefully
       }
@@ -128,7 +127,7 @@ export default function ChatPage() {
       setTimeLeft(remaining);
 
       if (remaining === 0) {
-        setDiagnosisReached(true);
+        setTimeExpired(true);
         setIsSurveyOpen(true);
       }
     };
@@ -184,7 +183,7 @@ export default function ChatPage() {
         
         if (errData?.text === 'TIME_UP') {
           // The backend strictly enforces the 10-minute timer and rejected the message
-          setDiagnosisReached(true);
+          setTimeExpired(true);
           setIsSurveyOpen(true);
           setMessages(prev => prev.filter(m => m.id !== tempId));
           return;
@@ -312,10 +311,12 @@ export default function ChatPage() {
     );
   }
 
+  const isHistoryView = caseData?.status === 'COMPLETED' || caseData?.status === 'FAILED';
+
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-[#f6f5f4] dark:bg-[#0f0f0e] relative">
-      {/* Full screen success overlay */}
-      {diagnosisReached && (
+      {/* Full screen success overlay - ONLY show if freshly reached, not on history view */}
+      {diagnosisReached && !isHistoryView && (
         <div className="absolute inset-0 z-50 bg-white/95 dark:bg-[#0f0f0e]/95 flex flex-col items-center justify-center backdrop-blur-sm transition-all duration-700">
           <style>{`
             @keyframes successPop {
@@ -351,9 +352,9 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Failure Overlay */}
-      {caseData?.status === 'FAILED' && !isSurveyOpen && (
-        <div className="absolute inset-0 z-30 bg-white/90 dark:bg-[#1a1918]/90 backdrop-blur-md flex flex-col items-center justify-center p-6">
+      {/* Failure Overlay - ONLY show if freshly timed out, not on history view */}
+      {timeExpired && !isHistoryView && !isSurveyOpen && (
+        <div className="absolute inset-0 z-50 bg-white/95 dark:bg-[#0f0f0e]/95 flex flex-col items-center justify-center backdrop-blur-sm transition-all duration-700">
           <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6 shadow-xl animate-success-pop" style={{ animationDelay: '0.1s', opacity: 0 }}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-red-600 dark:text-red-400" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'draw-check 0.6s ease-out 0.3s forwards', strokeDasharray: 100, strokeDashoffset: 100 }}>
               <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -520,12 +521,13 @@ export default function ChatPage() {
       
       {/* Input area */}
       <div className="flex-none w-full relative z-40">
-        {caseData?.status === 'COMPLETED' ? (
-          <div className="bg-[#f6f5f4] dark:bg-[#0f0f0e] border-t border-[#e6e6e6] dark:border-[#2e2c2a] px-4 sm:px-6 py-6 flex items-center justify-center">
-             <p className="text-[14px] text-[#a39e98] dark:text-[#5a5652] font-medium flex items-center gap-2">
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-               This case is completed. History is read-only.
-             </p>
+        {isHistoryView ? (
+          <div className="flex-none p-4 pb-6 sm:p-6 sm:pb-8 bg-white dark:bg-[#141312] border-t border-[#e6e6e6] dark:border-[#2e2c2a] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.05)] flex items-center justify-center text-[#615d59] dark:text-[#8a8480] font-medium">
+            This case is completed. History is read-only.
+          </div>
+        ) : diagnosisReached || timeExpired ? (
+          <div className="flex-none p-4 pb-6 sm:p-6 sm:pb-8 bg-white dark:bg-[#141312] border-t border-[#e6e6e6] dark:border-[#2e2c2a] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.05)] flex items-center justify-center text-[#615d59] dark:text-[#8a8480] font-medium">
+            {timeExpired ? 'Time expired. Please complete the survey.' : 'Diagnosis reached. Please complete the survey.'}
           </div>
         ) : (
           <>
@@ -583,13 +585,16 @@ export default function ChatPage() {
         sessionId={sessionId}
       />
 
-      {/* Post-Diagnosis Survey Modal */}
-      <PostDiagnosisSurvey
-        isOpen={isSurveyOpen}
-        onClose={() => setIsSurveyOpen(false)}
-        onSubmit={handleSurveySubmit}
-        sessionId={sessionId}
-      />
+      {/* Post-Diagnosis Survey */}
+      {caseData && (
+        <PostDiagnosisSurvey
+          isOpen={isSurveyOpen}
+          onClose={() => setIsSurveyOpen(false)}
+          sessionId={caseData.sessionId || caseData.caseId}
+          onSubmit={handleSurveySubmit}
+          isForced={true}
+        />
+      )}
     </div>
   );
 }

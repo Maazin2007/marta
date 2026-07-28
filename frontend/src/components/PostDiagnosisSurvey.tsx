@@ -23,6 +23,7 @@ export interface PostDiagnosisSurveyProps {
   onClose: () => void;
   onSubmit: (data: FeedbackPayload) => void;
   sessionId: string;
+  isForced?: boolean;
 }
 
 export const PostDiagnosisSurvey: React.FC<PostDiagnosisSurveyProps> = ({
@@ -30,6 +31,7 @@ export const PostDiagnosisSurvey: React.FC<PostDiagnosisSurveyProps> = ({
   onClose,
   onSubmit,
   sessionId,
+  isForced = false,
 }) => {
   const [formData, setFormData] = useState({
     satisfaction: 0,
@@ -141,8 +143,8 @@ export const PostDiagnosisSurvey: React.FC<PostDiagnosisSurveyProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
+        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity ${isForced ? 'cursor-not-allowed' : ''}`}
+        onClick={isForced ? undefined : onClose}
       />
       
       {/* Modal Card */}
@@ -155,15 +157,17 @@ export const PostDiagnosisSurvey: React.FC<PostDiagnosisSurveyProps> = ({
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Clinical Experience Survey
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/5"
-            aria-label="Close survey"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          {!isForced && (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/5"
+              aria-label="Close survey"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
 
         <p className="text-gray-600 dark:text-gray-400 mb-6 shrink-0">
