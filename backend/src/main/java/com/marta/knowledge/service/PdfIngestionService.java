@@ -9,8 +9,10 @@ import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.parser.apache.pdfbox.ApachePdfBoxDocumentParser;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.AllMiniLmL6V2EmbeddingModel;
+import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Value;
+import java.time.Duration;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,9 +23,17 @@ public class PdfIngestionService {
     private final KnowledgeChunkRepository knowledgeChunkRepository;
     private final EmbeddingModel embeddingModel;   
 
-    public PdfIngestionService(KnowledgeChunkRepository knowledgeChunkRepository) {
+    public PdfIngestionService(
+            KnowledgeChunkRepository knowledgeChunkRepository,
+            @Value("${langchain4j.huggingface.api-key:YOUR_HF_API_KEY}") String hfApiKey) {
+        
         this.knowledgeChunkRepository = knowledgeChunkRepository;
-        this.embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+        this.embeddingModel = HuggingFaceEmbeddingModel.builder()
+                .accessToken(hfApiKey)
+                .modelId("sentence-transformers/all-MiniLM-L6-v2")
+                .waitForModel(true)
+                .timeout(Duration.ofSeconds(60))
+                .build();
     }
 
     public String ingestPdf(MultipartFile file, UUID caseId, String category) throws Exception {
