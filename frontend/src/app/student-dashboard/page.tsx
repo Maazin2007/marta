@@ -13,6 +13,7 @@ interface Case {
   presentingComplaint?: string;
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'PENDING_FEEDBACK' | 'COMPLETED' | 'FAILED';
   sessionId?: string;
+  startedAt?: string;
 }
 
 const BAND_COLORS = ['#62aef0', '#d6b6f6', '#2a9d99', '#dd5b00'];
