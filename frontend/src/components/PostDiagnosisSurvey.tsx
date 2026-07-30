@@ -33,7 +33,7 @@ export const PostDiagnosisSurvey: React.FC<PostDiagnosisSurveyProps> = ({
   sessionId,
   isForced = false,
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<FeedbackPayload, 'sessionId'>>({
     satisfaction: 0,
     answeredAllQuestions: 0,
     naturalness: 0,
