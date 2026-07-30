@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function StudentAuth() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function StudentAuth() {
   const [sex, setSex] = useState('');
   const [confidence, setConfidence] = useState<number>(50);
   const [pin, setPin] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +29,7 @@ export default function StudentAuth() {
     setSex('');
     setConfidence(50);
     setPin('');
+    setShowPassword(false);
     setError(null);
     setFieldErrors({});
     setResetSuccess(false);
@@ -269,17 +272,26 @@ export default function StudentAuth() {
               <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
                 New Password
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`w-full bg-white dark:bg-[#141312] border dark:border-[#2e2c2a] rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
-                  fieldErrors.password
-                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
-                    : 'border-[#e6e6e6] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
-                }`}
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`w-full bg-white dark:bg-[#141312] border dark:border-[#2e2c2a] rounded-[4px] px-3 py-1.5 pr-10 text-[15px] text-black dark:text-[#f0ede9] placeholder-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                    fieldErrors.password
+                      ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                      : 'border-[#e6e6e6] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                  }`}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a39e98] dark:text-[#5a5652] hover:text-[#31302e] dark:hover:text-[#c9c4be] focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <p className="mt-1 text-[13px] text-red-500 dark:text-[#8a8480]">{fieldErrors.password}</p>
               )}
@@ -347,18 +359,27 @@ export default function StudentAuth() {
               <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
                 Password
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
-                  fieldErrors.password
-                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
-                    : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
-                }`}
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 pr-10 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                    fieldErrors.password
+                      ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                      : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                  }`}
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a39e98] dark:text-[#5a5652] hover:text-[#31302e] dark:hover:text-[#c9c4be] focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <p className="mt-1 text-[13px] text-red-500">{fieldErrors.password}</p>
               )}
@@ -382,18 +403,27 @@ export default function StudentAuth() {
               <label className="block text-[14px] font-medium text-[#31302e] dark:text-[#c9c4be] mb-1">
                 Password
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
-                  fieldErrors.password
-                    ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
-                    : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
-                }`}
-                placeholder="Choose a strong password"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`w-full bg-white dark:bg-[#141312] border rounded-[4px] px-3 py-1.5 pr-10 text-[15px] text-black dark:text-[#f0ede9] placeholder:text-[#a39e98] dark:placeholder:text-[#5a5652] focus:outline-none transition-all ${
+                    fieldErrors.password
+                      ? 'border-red-400 focus:border-red-400 focus:ring-1 focus:ring-red-400/20'
+                      : 'border-[#e6e6e6] dark:border-[#2e2c2a] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20'
+                  }`}
+                  placeholder="Choose a strong password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a39e98] dark:text-[#5a5652] hover:text-[#31302e] dark:hover:text-[#c9c4be] focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <p className="mt-1 text-[13px] text-red-500">{fieldErrors.password}</p>
               )}

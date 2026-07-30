@@ -400,7 +400,7 @@ export default function StudentDashboard() {
                 }}
                 className="flex-1 py-3 rounded-[10px] font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
               >
-                I understand, start timer
+                I understand
               </button>
             </div>
           </div>
