@@ -76,7 +76,7 @@ export default function StudentDashboard() {
     router.push('/');
   };
 
-  const handleOpenCase = async (c: Case, index: number) => {
+  const handleOpenCase = async (c: Case, index?: number) => {
     if (c.status === 'COMPLETED' && !c.sessionId) return;
     const token = localStorage.getItem('jwt_token');
     if (!token) {
@@ -84,9 +84,11 @@ export default function StudentDashboard() {
       return;
     }
 
+    const actualIndex = index !== undefined ? index : cases.findIndex((item) => item.caseId === c.caseId);
+
     if (c.sessionId) {
       // Stash case data so the chat page can show the patient intake card without an extra fetch
-      sessionStorage.setItem(`marta_case_${c.sessionId}`, JSON.stringify({ ...c, caseNumber: index + 1 }));
+      sessionStorage.setItem(`marta_case_${c.sessionId}`, JSON.stringify({ ...c, caseNumber: actualIndex + 1 }));
       router.push(`/chat/${c.sessionId}`);
       return;
     }
@@ -111,7 +113,7 @@ export default function StudentDashboard() {
       if (contentType && contentType.includes('application/json')) {
         const data = await res.json();
         // Stash the case data under the new session id
-        sessionStorage.setItem(`marta_case_${data.id}`, JSON.stringify({ ...c, sessionId: data.id, caseNumber: index + 1, startedAt: data.startedAt || c.startedAt }));
+        sessionStorage.setItem(`marta_case_${data.id}`, JSON.stringify({ ...c, sessionId: data.id, caseNumber: actualIndex + 1, startedAt: data.startedAt || c.startedAt }));
         router.push(`/chat/${data.id}`);
       } else {
         console.error('Unexpected response format from /chat/start');
