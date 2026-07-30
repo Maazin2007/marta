@@ -29,4 +29,4 @@ COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 
 # Start the application with memory optimizations for 512MB free tier
-ENTRYPOINT ["java", "-Xmx300m", "-XX:+UseSerialGC", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx450m", "-XX:+UseSerialGC", "-jar", "app.jar"]
