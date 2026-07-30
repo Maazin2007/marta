@@ -19,9 +19,6 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Install libgomp1 (Required for ONNX Runtime / Langchain4j Embeddings)
-RUN apt-get update && apt-get install -y libgomp1 && rm -rf /var/lib/apt/lists/*
-
 # Copy the built JAR from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
@@ -29,4 +26,4 @@ COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 
 # Start the application with memory optimizations for 512MB free tier
-ENTRYPOINT ["java", "-Xmx450m", "-XX:+UseSerialGC", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx350m", "-XX:+UseSerialGC", "-jar", "app.jar"]

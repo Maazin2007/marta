@@ -2,10 +2,12 @@ package com.marta.knowledge.service;
 
 import com.marta.knowledge.model.KnowledgeChunk;
 import com.marta.knowledge.repository.KnowledgeChunkRepository;
-import dev.langchain4j.model.embedding.AllMiniLmL6V2EmbeddingModel;
+import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -16,9 +18,17 @@ public class KnowledgeRetrievalService {
     private final KnowledgeChunkRepository knowledgeChunkRepository;
     private final EmbeddingModel embeddingModel;
 
-    public KnowledgeRetrievalService(KnowledgeChunkRepository knowledgeChunkRepository) {
+    public KnowledgeRetrievalService(
+            KnowledgeChunkRepository knowledgeChunkRepository,
+            @Value("${langchain4j.huggingface.api-key:YOUR_HF_API_KEY}") String hfApiKey) {
+        
         this.knowledgeChunkRepository = knowledgeChunkRepository;
-        this.embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+        this.embeddingModel = HuggingFaceEmbeddingModel.builder()
+                .accessToken(hfApiKey)
+                .modelId("sentence-transformers/all-MiniLM-L6-v2")
+                .waitForModel(true)
+                .timeout(Duration.ofSeconds(60))
+                .build();
     }
 
     public String getRelevantMedicalContext(UUID caseId, String studentQuestion) {
