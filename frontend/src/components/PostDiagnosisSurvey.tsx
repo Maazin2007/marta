@@ -61,11 +61,11 @@ export const PostDiagnosisSurvey: React.FC<PostDiagnosisSurveyProps> = ({
 
   if (!isOpen && !isVisible) return null;
 
-  const handleRatingChange = (field: keyof FeedbackPayload, value: number) => {
+  const handleRatingChange = (field: keyof Omit<FeedbackPayload, 'sessionId'>, value: number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleTextChange = (field: keyof FeedbackPayload, value: string) => {
+  const handleTextChange = (field: keyof Omit<FeedbackPayload, 'sessionId'>, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -107,7 +107,7 @@ export const PostDiagnosisSurvey: React.FC<PostDiagnosisSurveyProps> = ({
     });
   };
 
-  const renderRating = (field: keyof FeedbackPayload, label: string, leftLabel: string, rightLabel: string) => (
+  const renderRating = (field: keyof Omit<FeedbackPayload, 'sessionId'>, label: string, leftLabel: string, rightLabel: string) => (
     <div className="mb-6">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         {label}
