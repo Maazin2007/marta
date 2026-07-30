@@ -28,5 +28,5 @@ COPY --from=build /app/target/*.jar app.jar
 # Expose the default Spring Boot port
 EXPOSE 8080
 
-# Start the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Start the application with memory optimizations for 512MB free tier
+ENTRYPOINT ["java", "-Xmx300m", "-XX:+UseSerialGC", "-jar", "app.jar"]
