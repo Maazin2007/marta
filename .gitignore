@@ -41,3 +41,6 @@ build/
 
 ### Local machine overrides (API keys, etc.) ###
 backend/config/
+
+# Personal Study Plans
+9_DAY_MASTER_PLAN.md

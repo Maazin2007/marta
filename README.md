@@ -87,8 +87,117 @@ npm run dev
 - ✅ Hybrid RAG Vector Pipeline (pgvector) — complete
 - ✅ Culturally authentic Saudi patient cases — complete
 - ✅ Student case dashboard with progress tracking — complete
-- ⏳ Next.js frontend — in progress
+- ✅ Next.js frontend — in progress
 - ⏳ Tests, CI/CD pipeline, containerization — planned after core features ship
+
+## Database Schema (Entity Relationship)
+
+```mermaid
+erDiagram
+    Participant {
+        UUID id PK
+        String email
+        String password
+    }
+    ParticipantDemographic {
+        UUID id PK
+        UUID participant_id FK
+    }
+    Researcher {
+        UUID id PK
+        String email
+        String password
+    }
+    DiagnosticSession {
+        UUID id PK
+        UUID participant_id FK
+        UUID case_id FK
+        Boolean diagnosis_reached
+    }
+    Message {
+        UUID id PK
+        UUID session_id FK
+        String sender_role
+        String text_content
+    }
+    Case {
+        UUID id PK
+        String title
+        String difficulty
+    }
+    KnowledgeChunk {
+        UUID id PK
+        UUID case_id FK
+        Vector embedding
+    }
+    SessionFeedback {
+        UUID id PK
+        UUID session_id FK
+        UUID participant_id FK
+    }
+
+    Participant ||--|| ParticipantDemographic : "has (1:1)"
+    Participant ||--o{ DiagnosticSession : "participates in (1:N)"
+    Participant ||--o{ SessionFeedback : "provides (1:N)"
+    
+    Case ||--o{ DiagnosticSession : "is diagnosed in (1:N)"
+    Case ||--o{ KnowledgeChunk : "is built from (1:N)"
+    
+    DiagnosticSession ||--o{ Message : "contains (1:N)"
+    DiagnosticSession ||--|| SessionFeedback : "receives (1:1)"
+```
+
+Architecural Decisions:
+
+- Why postgres over other databases?
+I choose postgresSQL, because this is an AI-driven application, by using the pg-vector extension, my postgres database can act as both a traditional database and a vector database for AI knowledge chunks. Thinks means i did not have to pay or maintain seperate vector databases like pinecone, this 
+kept my architecure simple, fast and cost-effective.
+
+- How do we handle 1 million messages in our DB ensuring fast retrival time?
+I have added an index to the session_id column of the database this ensures, postgres create a 
+B-tree index lookup for the sessionID column so it does not have to scan each row, this ensures lookup times remain fast.
+
+- Why the Participant Demographic table and the Participant table in one singe table?
+I used data normalization the participant data is strictly for authentication and core identity, by
+seperating the demographics into a 1-to-1 relationship, we keep the auth table lightweight and fast, 
+It also makes it easier to query demographics for research without accidently pulling sesitive login
+credentials.
+
+- How did i cater for the N+1 Springboot JPA trap ?
+I opted for a lossely coupled architecure by storing raw UUID instead, instead of using @ManyToOne
+annotation. While i lose the convinience of Hibernate's cascading save which is not a major concern for this project, I prefer this approach becuase it makes my database queries 100% perdictable, completely eliminates the N+1 problem, and makes the architecture easier to split into Microservices later if we need to scale while to be fair is not a major concern for this project but an overall advantage of a lossely coupled architecture.
+
+- Why UUID over standard squential integers ? 
+I choose UUID's for a two main reason. First, Security (Insercure Direct Object Reference - IDOR). 
+If my sessions used sequential ID, malicious user could look at their URL, guess that the next interger might exist which would cause them to access some other uses chat which would be a major 
+security voilation. Second reason being scalability, if an app scales to multiple database servers, 
+generating ID's across different servers, can cause collision, UUID's are univeresly unique, so 
+they prevent collisions.
+
+- What are ACID properties and how do you ensure data safety?
+ACID stands for Atomicity, Consistency, Isolation, and Durability. It guarantees that database transactions are processed reliably, like an 'All-or-Nothing' operation, so data never gets corrupted if the server crashes halfway through. In Spring Boot, I use the `@Transactional` annotation on my Service methods. This ensures that if a multi-step database operation fails halfway, everything is safely rolled back.
+
+- Why RAG instead of Fine-Tuning a custom AI model?
+I chose RAG (Retrieval-Augmented Generation) because fine-tuning is expensive and inflexible. If a medical fact changes, I would have to retrain a fine-tuned model. With RAG, if data changes, I just update a single row in my PostgreSQL database. Furthermore, RAG drastically reduces AI "hallucinations" because I force the AI to read my exact database chunks before answering.
+
+- Why use LangChain4j instead of calling the AI API directly?
+I used LangChain4j because it abstracts away the complex boilerplate of AI integration, like managing chat memory and calculating vector math for RAG. More importantly, it keeps my code Model-Agnostic. If I ever need to switch from Claude to OpenAI (ChatGPT), I can do it by changing a single line of config without rewriting my business logic.
+
+- Why Anthropic (Claude) over OpenAI (ChatGPT)?
+I chose Anthropic because Claude is widely considered the industry leader for Persona Adoption and Long-Context Reasoning. Since my app requires the AI to act like a specific patient in a diagnostic session, Claude is much better at staying in character and not breaking the illusion compared to ChatGPT.
+
+- How do you generate your Vector Embeddings for RAG?
+Instead of paying Anthropic or OpenAI every single time we need to generate an embedding for text, I used the HuggingFace integration (`langchain4j-hugging-face`). This allows us to use open-source, free embedding models (like `all-MiniLM-L6-v2`) locally to turn our text into vectors. We only pay Anthropic for the final chat generation, which drastically cuts down our API costs.
+
+- Is it safe to use `ddl-auto=update` for database management in production?
+No, it is highly dangerous for production because Hibernate might accidentally drop a column or lock a table. It is strictly for rapid prototyping in development. In a real production environment, I would set it to `none` or `validate`, and use a proper schema migration tool like Flyway or Liquibase to safely version-control database changes.
+
+- How did you protect your AI API from spam and your login endpoints from brute-force attacks?
+I implemented Rate Limiting at the architectural level using the Resilience4j library. I configured the API to only allow 5 login attempts per minute to prevent hackers from brute-forcing passwords. For the AI chat, I limited it to 1 message every 3 seconds per user to prevent someone from spamming the system and running up my Anthropic API bill.
+
+- How do you handle errors gracefully without crashing the server or leaking Java code?
+I implemented a Global Exception Handler using Spring's `@ControllerAdvice`. Instead of crashing or leaking Java stack traces to the frontend, my backend intercepts every error across the entire application and formats it into a clean, unified JSON response (e.g., `{"error": "Session not found", "status": 404}`). This ensures the frontend always receives predictable errors it can display to the user.
+
 
 See `PROJECT.md` for the full feature breakdown.
 See `api-contract/` for complete API documentation.
