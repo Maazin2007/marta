@@ -3,6 +3,7 @@ package com.marta.auth.controller;
 import com.marta.auth.service.*;
 import com.marta.auth.repository.*;
 
+import org.springframework.context.annotation.Lazy;
 import com.marta.auth.dto.LoginRequest;
 import com.marta.auth.dto.LoginResponse;
 import com.marta.auth.dto.RegisterRequest;
@@ -24,7 +25,7 @@ public class ParticipantController {
     // get the Service Class for this controller
     private final ParticipantService participantService;
 
-    public ParticipantController(ParticipantService participantService) {
+    public ParticipantController(@Lazy ParticipantService participantService) {
         this.participantService = participantService;
     }
 
