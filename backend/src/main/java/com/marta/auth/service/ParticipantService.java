@@ -66,7 +66,7 @@ public class ParticipantService {
      * Generates a random participant ID with 8 characters
      * @return The generated participant ID
      */
-    private String generateParticipantId() {
+    public String generateParticipantId() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         // StringBuilder is a mutable sequence of characters efficent way of concatenating strings
         StringBuilder sb = new StringBuilder();
