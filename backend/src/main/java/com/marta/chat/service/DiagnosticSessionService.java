@@ -168,6 +168,6 @@ public class DiagnosticSessionService {
             }
         }
 
-        return new AiPatientResponse(text, false, null);
+        return new AiPatientResponse("I'm sorry, could you please repeat that?", false, null);
     }
 }

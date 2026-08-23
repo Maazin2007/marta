@@ -31,15 +31,15 @@ public class Case {
     private String title;
 
     // patient history is a string
-    @Column(name = "patient_history", updatable = true, nullable = false, length = 4000)
+    @Column(name = "patient_history", updatable = true, nullable = false, columnDefinition = "TEXT")
     private String patientHistory;
 
     // presenting complaint is a string
-    @Column(name = "presenting_complaint", updatable = true, nullable = false, length = 2000)
+    @Column(name = "presenting_complaint", updatable = true, nullable = false, columnDefinition = "TEXT")
     private String presentingComplaint;
 
     // learning objective is a string
-    @Column(name = "learning_objective", updatable = true, nullable = false, length = 2000)
+    @Column(name = "learning_objective", updatable = true, nullable = false, columnDefinition = "TEXT")
     private String learningObjective;
 
     // active is a boolean
@@ -51,7 +51,7 @@ public class Case {
     private String correctDiagnosis;
 
     // The personality of the AI patient
-    @Column(name = "patient_persona", updatable = true, nullable = false, length = 4000)
+    @Column(name = "patient_persona", updatable = true, nullable = false, columnDefinition = "TEXT")
     private String patientPersona;
 
     // The difficulty level for researcher metrics (e.g. "Beginner", "Intermediate", "Advanced")

@@ -41,7 +41,7 @@ public interface KnowledgeChunkRepository extends JpaRepository<KnowledgeChunk, 
             -- native query so we can send raw SQL queries to the database no JPAQL
             -- RRF math 
             -- 1.0 / (60 + s.rank) + 1.0 / (60 + w.rank) DESC   
-            ORDER BY COALESCE(1.0 / (60 + s.rank), 0.0) + COALESCE(1.0 / (60 + w.rank), 0.0) DESC   
+            ORDER BY COALESCE(1.0 / (60 + s.rank), 0.0) + COALESCE(1.0 / (60 + w.rank), 0.0) DESC LIMIT 10
             """, nativeQuery = true)
             List<KnowledgeChunk> findTopChunksHybrid(                                                             
                 @Param("caseId") UUID caseId,                                                                 

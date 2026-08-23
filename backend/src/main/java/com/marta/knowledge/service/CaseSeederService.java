@@ -25,27 +25,9 @@ public class CaseSeederService {
         this.transactionTemplate = transactionTemplate;
     }
 
-    private void ensureCaseTextColumns() {
-        List<String> migrations = List.of(
-            "ALTER TABLE cases ALTER COLUMN patient_history TYPE TEXT",
-            "ALTER TABLE cases ALTER COLUMN presenting_complaint TYPE TEXT",
-            "ALTER TABLE cases ALTER COLUMN learning_objective TYPE TEXT",
-            "ALTER TABLE cases ALTER COLUMN patient_persona TYPE TEXT"
-        );
-        for (String sql : migrations) {
-            try {
-                entityManager.createNativeQuery(sql).executeUpdate();
-            } catch (Exception ignored) {
-                // Column may already use TEXT or table may not exist yet.
-            }
-        }
-    }
-
     @PostConstruct
     public void seedCases() {
         transactionTemplate.executeWithoutResult(status -> {
-            ensureCaseTextColumns();
-
             if (caseRepository.count() == 0) {
             System.out.println("🦷 No clinical cases found in DB. Seeding the 4 scenarios...");
 

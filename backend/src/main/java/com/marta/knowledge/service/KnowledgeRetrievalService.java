@@ -45,7 +45,6 @@ public class KnowledgeRetrievalService {
         
         // 3. We only want to feed Claude the absolute top 3 most relevant paragraphs
         return bestChunks.stream()
-                .limit(3)
                 .map(KnowledgeChunk::getContent)
                 .collect(Collectors.joining("\n\n---\n\n"));
     }
