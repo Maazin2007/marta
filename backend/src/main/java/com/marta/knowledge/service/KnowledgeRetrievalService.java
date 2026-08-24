@@ -2,7 +2,7 @@ package com.marta.knowledge.service;
 
 import com.marta.knowledge.model.KnowledgeChunk;
 import com.marta.knowledge.repository.KnowledgeChunkRepository;
-import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,13 +20,13 @@ public class KnowledgeRetrievalService {
 
     public KnowledgeRetrievalService(
             KnowledgeChunkRepository knowledgeChunkRepository,
-            @Value("${langchain4j.huggingface.api-key:YOUR_HF_API_KEY}") String hfApiKey) {
-        
+            @Value("${langchain4j.open-ai.embedding-model.api-key}") String openAiApiKey,
+            @Value("${langchain4j.open-ai.embedding-model.model-name:text-embedding-3-small}") String modelName) {
+
         this.knowledgeChunkRepository = knowledgeChunkRepository;
-        this.embeddingModel = HuggingFaceEmbeddingModel.builder()
-                .accessToken(hfApiKey)
-                .modelId("sentence-transformers/all-MiniLM-L6-v2")
-                .waitForModel(true)
+        this.embeddingModel = OpenAiEmbeddingModel.builder()
+                .apiKey(openAiApiKey)
+                .modelName(modelName)
                 .timeout(Duration.ofSeconds(60))
                 .build();
     }

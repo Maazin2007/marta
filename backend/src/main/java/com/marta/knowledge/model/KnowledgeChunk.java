@@ -37,8 +37,9 @@ public class KnowledgeChunk {
     private String content;
 
     // This will hold our pgvector mathematical array for the embedding!
+    // 1536 = dimension of OpenAI's text-embedding-3-small model
     @JdbcTypeCode(SqlTypes.VECTOR)
-    @Array(length = 384)
+    @Array(length = 1536)
     @Column(name = "embedding", updatable = true, nullable = false)
     private float[] embedding;
 
