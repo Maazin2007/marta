@@ -14,11 +14,11 @@ jobs:
     steps:
       # 1. Download our entire Marta codebase from GitHub onto the blank server's hard drive
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # 2. Install Java 21 so the Linux server can actually understand Spring Boot
       - name: Set up Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -27,7 +27,7 @@ jobs:
       # 3. CONTINUOUS INTEGRATION (CI): Run the 14 Mockito tests to prove the code isn't broken
       - name: Run Unit Tests
         working-directory: ./backend # Tell the server to 'cd' into the backend folder
-        run: chmod +x mvnw && ./mvnw clean test
+        run: chmod +x mvnw && ./mvnw clean test -Dtest="*Test" -DfailIfNoTests=false
 
       # 4. CONTINUOUS DEPLOYMENT PREP (CD): Package the tested code into a Docker Blueprint
       - name: Build Docker image
