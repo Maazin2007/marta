@@ -1,29 +1,16 @@
-# Stage 1: Build the application using Maven
-FROM eclipse-temurin:21-jdk-jammy AS build
+#STAGE 1: THE BUILDER
+# Keep the full JDK for builder then swtich to lighter image for runner
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
-
-# Copy the Maven wrapper and project object model (pom.xml)
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-
-# Make the Maven wrapper executable and download dependencies
-RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
-
-# Copy the actual source code and build the JAR
+COPY pom.xml .
 COPY src ./src
-RUN cp src/main/resources/application.properties.example src/main/resources/application.properties
-RUN ./mvnw clean package -DskipTests
+# we are skipping the tests sense they will be run the CI/CD pipeline
+RUN mvn clean package -DskipTests 
 
-# Stage 2: Run the application
-FROM eclipse-temurin:21-jre-jammy
+#STAGE 2: THE runner
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-
-# Copy the built JAR from the build stage
-COPY --from=build /app/target/*.jar app.jar
-
-# Expose the default Spring Boot port
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Start the application with memory optimizations for 512MB free tier
-ENTRYPOINT ["java", "-Xmx350m", "-XX:+UseSerialGC", "-jar", "app.jar"]
+# Optimization trick to run the jar with lower ram consumption
+ENTRYPOINT ["java", "-Xmx350m", "-jar", "app.jar"]
