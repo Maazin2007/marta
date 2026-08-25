@@ -1,5 +1,6 @@
 package com.marta.knowledge.model;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -15,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "cases")
 @Data
 @NoArgsConstructor
-public class Case {
+public class Case implements Serializable {
     // primary key ID is a UUID
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

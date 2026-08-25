@@ -35,10 +35,10 @@ public class StudentCaseController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('STUDENT')") 
     public ResponseEntity<List<CaseStatusResponse>> getActiveCases(Authentication authentication) {
         // Extract the participant ID from the JWT authentication object
-        UUID participantId = UUID.fromString(authentication.getName());
+        UUID participantId = UUID.fromString(authentication.getName()); 
 
         List<Case> activeCases = caseRepository.findAll().stream()
                 .filter(Case::isActive)
