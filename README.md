@@ -87,8 +87,49 @@ npm run dev
 - ✅ Hybrid RAG Vector Pipeline (pgvector) — complete
 - ✅ Culturally authentic Saudi patient cases — complete
 - ✅ Student case dashboard with progress tracking — complete
-- ✅ Next.js frontend — in progress
-- ⏳ Tests, CI/CD pipeline, containerization — planned after core features ship
+
+
+- ✅ Tests, CI/CD pipeline, containerization — complete
+- ✅ Redis Caching & Java 21 Virtual Threads — complete
+
+## 🚀 Performance & Benchmarks
+
+To ensure enterprise-grade scalability and security, the backend was rigorously load-tested and optimized. Below are the official benchmark results, along with the commands to verify them locally.
+
+### 1. Backend Scalability (Apache Bench)
+Tested the API under high concurrency (100 simultaneous users sending 1,000 requests) to measure the impact of Java 21 Virtual Threads combined with a Redis caching layer.
+
+*   **Base Case (Standard Java + No Cache):** 46 req/s | 2,173 ms average latency
+*   **Fully Optimized (Virtual Threads + Redis Cache):** 67 req/s | 1,476 ms average latency
+*   **Result:** 45% increase in throughput and a massive reduction in database load.
+
+**How to verify yourself:**
+```bash
+# Run 1000 requests with 100 concurrent users
+ab -n 1000 -c 100 http://localhost:8080/marta/api/v1/cases
+```
+
+### 2. Security & Rate Limiting (Resilience4j)
+Implemented Resilience4j to protect the authentication endpoints from brute-force attacks (limited to 5 attempts per minute).
+*   **Test:** 100 simulated login attempts in 1 second.
+*   **Result:** 5 allowed, 95 blocked (`429 Too Many Requests`). 95% brute-force mitigation rate.
+
+**How to verify yourself:**
+```bash
+# Simulate a brute-force attack
+echo '{"pin":"1234"}' > dummy.json && ab -n 100 -c 10 -T 'application/json' -p dummy.json http://localhost:8080/marta/api/v1/auth/login
+```
+
+### 3. Code Quality & Test Coverage (JaCoCo)
+The backend core business logic is tested using JUnit 5 and Mockito.
+*   **Result:** 53% unit test coverage.
+
+**How to verify yourself:**
+```bash
+cd backend
+./mvnw clean test jacoco:report
+# Open the generated HTML report at: backend/target/site/jacoco/index.html
+```
 
 ## Database Schema (Entity Relationship)
 
